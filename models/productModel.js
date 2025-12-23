@@ -47,7 +47,7 @@ var productSchema = new mongoose.Schema(
       default: 0,
       select: false,
     },
-    rating: [
+    ratings: [
       {
         star: Number,
         postedBy: {
@@ -56,7 +56,12 @@ var productSchema = new mongoose.Schema(
         },
       },
     ],
+    totalRating: {
+      type: String,
+      default: 0,
+    },
   },
+
   { timestamps: true }
 );
 
