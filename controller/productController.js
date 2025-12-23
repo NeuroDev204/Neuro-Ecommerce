@@ -41,6 +41,7 @@ const getAllProducts = asyncHandler(async (req, res) => {
 
     //sorting
     if (req.query.sort) {
+      // @ts-ignore
       const sortBy = req.query.sort.split(",").join(" ");
       query = query.sort(sortBy);
     } else {
@@ -49,6 +50,7 @@ const getAllProducts = asyncHandler(async (req, res) => {
 
     //limit the fields
     if (req.query.fields) {
+      // @ts-ignore
       const fields = req.query.fields.split(",").join(" ");
       query = query.select(fields);
     } else {
@@ -58,7 +60,9 @@ const getAllProducts = asyncHandler(async (req, res) => {
     //pagination
     const page = req.query.page;
     const limit = req.query.limit;
+    // @ts-ignore
     const skip = (page - 1) * limit;
+    // @ts-ignore
     query = query.skip(skip).limit(limit);
     if (req.query.page) {
       const productCount = await Product.countDocuments();
