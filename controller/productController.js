@@ -3,6 +3,7 @@ const User = require("../models/userModel");
 const asyncHandler = require("express-async-handler");
 const validateMongodbId = require("../utils/validateMongodbId");
 const { Stream } = require("nodemailer/lib/xoauth2");
+const cloudinaryUploadImg = require("../utils/cloudinary");
 const slugify = require("slugify").default;
 const createProduct = asyncHandler(async (req, res) => {
   try {
@@ -160,7 +161,7 @@ const addToWishlist = asyncHandler(async (req, res) => {
 
 const rating = asyncHandler(async (req, res) => {
   const { _id } = req.user;
-  const { star, productId } = req.body;
+  const { star, productId, comment } = req.body;
 
   try {
     const product = await Product.findById(productId);
@@ -173,7 +174,7 @@ const rating = asyncHandler(async (req, res) => {
           ratings: { $elemMatch: alreadyRated },
         },
         {
-          $set: { "ratings.$.star": star },
+          $set: { "ratings.$.star": star, "ratings.$.comment": comment },
         },
         {
           new: true,
@@ -187,6 +188,7 @@ const rating = asyncHandler(async (req, res) => {
           $push: {
             ratings: {
               star: star,
+              comment: comment,
               postedBy: _id,
             },
           },
@@ -212,6 +214,40 @@ const rating = asyncHandler(async (req, res) => {
     throw new Error(error);
   }
 });
+const uploadImages = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  validateMongodbId(id);
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ message: "No files uploaded" });
+    }
+
+    const urls = [];
+    
+    for (const file of req.files) {
+      const { path } = file;
+      try {
+        const result = await cloudinaryUploadImg(path);
+        urls.push(result.url);
+      } catch (uploadError) {
+        console.error("Cloudinary upload error:", uploadError);
+        throw uploadError;
+      }
+    }
+    
+    const findProduct = await Product.findByIdAndUpdate(
+      id,
+      {
+        images: urls,
+      },
+      { new: true }
+    );
+    res.json(findProduct);
+  } catch (error) {
+    console.error("Upload Images Error:", error);
+    throw new Error(error);
+  }
+});
 module.exports = {
   createProduct,
   getProduct,
@@ -221,4 +257,5 @@ module.exports = {
   createManyProducts,
   addToWishlist,
   rating,
+  uploadImages,
 };
