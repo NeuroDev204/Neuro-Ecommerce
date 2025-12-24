@@ -37,7 +37,12 @@ router.put("/save-address", authMiddleware, saveAddress);
 
 router.post("/forgot-password-token", forgotPasswordToken);
 router.put("/reset-password/:token", resetPassword);
-router.put("/order/update-order/:id", authMiddleware, updateOrderStatus);
+router.put(
+  "/order/update-order/:id",
+  authMiddleware,
+  isAdmin,
+  updateOrderStatus
+);
 
 router.get("/wishlist", authMiddleware, getWishlist);
 router.get("/refresh", handleRefreshToken);
