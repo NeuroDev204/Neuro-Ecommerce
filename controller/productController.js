@@ -223,7 +223,7 @@ const uploadImages = asyncHandler(async (req, res) => {
     }
 
     const urls = [];
-    
+
     for (const file of req.files) {
       const { path } = file;
       try {
@@ -234,7 +234,7 @@ const uploadImages = asyncHandler(async (req, res) => {
         throw uploadError;
       }
     }
-    
+
     const findProduct = await Product.findByIdAndUpdate(
       id,
       {
