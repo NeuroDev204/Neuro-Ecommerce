@@ -3,7 +3,7 @@ const User = require("../models/userModel");
 const asyncHandler = require("express-async-handler");
 const validateMongodbId = require("../utils/validateMongodbId");
 const { Stream } = require("nodemailer/lib/xoauth2");
-const cloudinaryUploadImg = require("../utils/cloudinary");
+const { cloudinaryUploadFromBuffer, cloudinaryDeleteImg } = require("../utils/cloudinary");
 const slugify = require("slugify").default;
 const createProduct = asyncHandler(async (req, res) => {
   try {
@@ -215,39 +215,40 @@ const rating = asyncHandler(async (req, res) => {
   }
 });
 const uploadImages = asyncHandler(async (req, res) => {
-  const { id } = req.params;
-  validateMongodbId(id);
   try {
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ message: "No files uploaded" });
     }
-
-    const urls = [];
-
+    const images = [];
     for (const file of req.files) {
-      const { path } = file;
       try {
-        const result = await cloudinaryUploadImg(path);
-        urls.push(result.url);
+        // Use file.buffer since multer uses memory storage
+        const result = await cloudinaryUploadFromBuffer(file.buffer);
+        images.push({
+          url: result.url,
+          asset_id: result.asset_id,
+          public_id: result.public_id,
+        });
       } catch (uploadError) {
-        console.error("Cloudinary upload error:", uploadError);
         throw uploadError;
       }
     }
-
-    const findProduct = await Product.findByIdAndUpdate(
-      id,
-      {
-        images: urls,
-      },
-      { new: true }
-    );
-    res.json(findProduct);
+    res.json(images);
   } catch (error) {
-    console.error("Upload Images Error:", error);
-    throw new Error(error);
+    throw error instanceof Error ? error : new Error(String(error));
   }
 });
+
+const deleteImage = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await cloudinaryDeleteImg(id);
+    res.json({ message: "Image deleted successfully", result });
+  } catch (error) {
+    throw error instanceof Error ? error : new Error(String(error));
+  }
+});
+
 module.exports = {
   createProduct,
   getProduct,
@@ -258,4 +259,5 @@ module.exports = {
   addToWishlist,
   rating,
   uploadImages,
+  deleteImage,
 };

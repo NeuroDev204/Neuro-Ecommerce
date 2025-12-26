@@ -15,10 +15,14 @@ const cloudinaryUploadImg = async (fileToUploads) => {
       },
       (error, result) => {
         if (error) {
-          reject(error);
+          // Convert Cloudinary error object to proper Error instance
+          const errorMessage = error.message || JSON.stringify(error);
+          reject(new Error(`Cloudinary upload failed: ${errorMessage}`));
         } else {
           resolve({
             url: result.secure_url,
+            asset_id: result.asset_id,
+            public_id: result.public_id,
           });
         }
       }
@@ -34,10 +38,14 @@ const cloudinaryUploadFromBuffer = async (buffer) => {
       },
       (error, result) => {
         if (error) {
-          reject(error);
+          // Convert Cloudinary error object to proper Error instance
+          const errorMessage = error.message || JSON.stringify(error);
+          reject(new Error(`Cloudinary upload failed: ${errorMessage}`));
         } else {
           resolve({
             url: result.secure_url,
+            asset_id: result.asset_id,
+            public_id: result.public_id,
           });
         }
       }
@@ -46,4 +54,21 @@ const cloudinaryUploadFromBuffer = async (buffer) => {
   });
 };
 
-module.exports = { cloudinaryUploadImg, cloudinaryUploadFromBuffer };
+const cloudinaryDeleteImg = async (publicId) => {
+  return new Promise((resolve, reject) => {
+    cloudinary.uploader.destroy(publicId, (error, result) => {
+      if (error) {
+        const errorMessage = error.message || JSON.stringify(error);
+        reject(new Error(`Cloudinary delete failed: ${errorMessage}`));
+      } else {
+        resolve(result);
+      }
+    });
+  });
+};
+
+module.exports = {
+  cloudinaryUploadImg,
+  cloudinaryUploadFromBuffer,
+  cloudinaryDeleteImg,
+};
